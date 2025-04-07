@@ -6,17 +6,31 @@ on:
       - main
 
 jobs:
-  build-deploy:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Login to OpenShift
+    - name: Install OpenShift CLI
       run: |
-        oc login <openshift-cluster-url> --token=<your-token>
+        curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
+        tar -xvf oc.tar.gz
+        sudo mv oc /usr/local/bin/
 
-    - name: Create App and Expose Service
+    - name: Login to OpenShift
+      env:
+        OPENSHIFT_URL: ${{ secrets.OPENSHIFT_URL }}
+        OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
       run: |
-        oc new-app --docker-image=my-httpd-webserver:ubi --name=httpd-demo
-        oc expose svc/httpd-demo --port=80
+        oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN
+
+    - name: Apply Deployment
+      run: |
+        oc apply -f deployment.yaml
+        oc apply -f service.yaml
+
+    - name: Expose Service
+      run: |
+        oc expose svc nationalparks-backend
