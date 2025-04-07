@@ -1,0 +1,22 @@
+name: Deploy to OpenShift
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Login to OpenShift
+      run: |
+        oc login <openshift-cluster-url> --token=<your-token>
+
+    - name: Create App and Expose Service
+      run: |
+        oc new-app --docker-image=my-httpd-webserver:ubi --name=httpd-demo
+        oc expose svc/httpd-demo --port=80
