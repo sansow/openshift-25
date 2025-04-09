@@ -27,11 +27,14 @@ jobs:
       run: |
         oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify=true
 
+   - name: build
+      run: |
+      oc new-app registry.access.redhat.com/openjdk/openjdk-17-rhel7~https://github.com/sansow/nationalparks --name=nationalparks
+
     - name: Apply Deployment
       run: |
-        oc apply -f deployment.yaml
-        oc apply -f service.yaml
+        oc status
 
     - name: Expose Service
       run: |
-        oc expose svc nationalparks-backend
+        oc expose svc nationalparks
