@@ -1,0 +1,37 @@
+name: nationalparks
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install OpenShift CLI
+      run: |
+        curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
+        tar -xvf oc.tar.gz
+        sudo mv oc /usr/local/bin/
+
+    - name: Login to OpenShift
+      env:
+        OPENSHIFT_URL: ${{ secrets.OPENSHIFT_URL }}
+        OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
+      run: |
+        oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify
+
+    - name: Build Application
+      run: |
+        oc new-app registry.access.redhat.com/openjdk/openjdk-17-rhel7~https://github.com/sansow/nationalparks --name=nationalparks
+
+    - name: Check Deployment Status
+      run: |
+        oc status
+
+    - name: Expose Service
+      run: |
+        oc expose svc nationalparks
