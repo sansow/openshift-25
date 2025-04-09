@@ -26,7 +26,8 @@ jobs:
 
     - name: Build Application
       run: |
-        oc new-app registry.access.redhat.com/ubi9/openjdk-17-runtime~https://github.com/sansow/nationalparks --name=nationalparks
+        oc project parksmap
+        oc new-app registry.access.redhat.com/ubi9/openjdk-17~https://github.com/sansow/nationalparks --name=nationalparks
 
     - name: Check Deployment Status
       run: |
