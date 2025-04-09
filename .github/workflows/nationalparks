@@ -1,0 +1,36 @@
+ name: Deploy to OpenShift
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install OpenShift CLI
+      run: |
+        curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
+        tar -xvf oc.tar.gz
+        sudo mv oc /usr/local/bin/
+
+    - name: Login to OpenShift
+      env:
+        OPENSHIFT_URL: ${{ secrets.OPENSHIFT_URL }}
+        OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
+      run: |
+        oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify=true
+
+    - name: Apply Deployment
+      run: |
+        oc apply -f deployment.yaml
+        oc apply -f service.yaml
+
+    - name: Expose Service
+      run: |
+        oc expose svc nationalparks-backend
