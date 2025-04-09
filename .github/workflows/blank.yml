@@ -1,4 +1,4 @@
- name: Deploy to OpenShift
+name: Deploy to OpenShift
 
 on: 
   workflow_dispatch:
@@ -22,13 +22,13 @@ jobs:
         OPENSHIFT_URL: ${{ secrets.OPENSHIFT_URL }}
         OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
       run: |
-        oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify=true
+        oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify
 
-   - name: build
+    - name: Build Application
       run: |
-      oc new-app registry.access.redhat.com/openjdk/openjdk-17-rhel7~https://github.com/sansow/nationalparks --name=nationalparks
+        oc new-app registry.access.redhat.com/openjdk/openjdk-17-rhel7~https://github.com/sansow/nationalparks --name=nationalparks
 
-    - name: Apply Deployment
+    - name: Check Deployment Status
       run: |
         oc status
 
