@@ -19,6 +19,10 @@ jobs:
         set -a # Enable exporting all variables
         source $CONFIG_FILE_PATH
         set +a
+        echo "AWS_REGION: $AWS_REGION"
+        echo "ECR_URL: $ECR_URL"
+        echo "OPENSHIFT_PROJECT: $OPENSHIFT_PROJECT"
+        echo "BUILD_NAME: $BUILD_NAME"
 
     - name: Install Podman and Skopeo
       run: |
