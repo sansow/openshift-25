@@ -73,7 +73,7 @@ jobs:
     - name: Build Application
       run: |
         oc project $OPENSHIFT_PROJECT
-        oc new-app $APP_NAME
+        oc new-app $BASE_IMAGE~$REPO_URL --name=$BUILD_NAME
 
     - name: Tag Podman Image for ECR
       run: |
