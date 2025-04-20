@@ -23,7 +23,7 @@ jobs:
         echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
         echo "OPENSHIFT_PROJECT=$OPENSHIFT_PROJECT" >> $GITHUB_ENV
         echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
-        echo ECR_URL=$ECR_URL" >> $GITHUB_ENV
+        echo "ECR_URL=$ECR_URL" >> $GITHUB_ENV
 
     - name: Install Podman and Skopeo
       run: |
