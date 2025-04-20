@@ -4,3 +4,4 @@ OPENSHIFT_PROJECT=demo
 BUILD_NAME=nationalparks
 BASE_IMAGE=registry.access.redhat.com/ubi9/openjdk-17
 REPO_URL=https://github.com/sansow/nationalparks
+OCP_IMAGE=image-registry.openshift-image-registry.svc:5000/$OPENSHIFT_PROJECT/$BUILD_NAME
