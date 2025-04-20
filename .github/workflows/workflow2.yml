@@ -25,7 +25,7 @@ jobs:
         unzip awscliv2.zip
         sudo ./aws/install --update
         
-   - name: Install OpenShift CLI
+    - name: Install OpenShift CLI
       run: |
         curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
         tar -xvf oc.tar.gz
@@ -49,7 +49,7 @@ jobs:
         aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin 677628568568.dkr.ecr.us-east-2.amazonaws.com
     - name: Build Application
       run: |
-        oc project parksmap
+        oc project demo
         oc new-app registry.access.redhat.com/ubi9/openjdk-17~https://github.com/sansow/nationalparks --name=nationalparks
 
     - name: Tag Podman Image for ECR
