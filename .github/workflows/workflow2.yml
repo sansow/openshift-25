@@ -35,17 +35,18 @@ jobs:
         export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
         export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
         aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin 677628568568.dkr.ecr.us-east-2.amazonaws.com
-    - name: Build Podman Image
+    - name: Build Application
       run: |
-        podman build -t parksmap:latest .
+        oc project parksmap
+        oc new-app registry.access.redhat.com/ubi9/openjdk-17~https://github.com/sansow/nationalparks --name=nationalparks
 
     - name: Tag Podman Image for ECR
       run: |
-        podman tag parksmap:latest 677628568568.dkr.ecr.us-east-2.amazonaws.com/parksmap:latest
+        podman tag nationalparks:latest 677628568568.dkr.ecr.us-east-2.amazonaws.com/nationalparks:latest
 
     - name: Push Image to ECR with Skopeo
       run: |
-        skopeo copy --dest-creds AWS:${{ secrets.AWS_SECRET_ACCESS_KEY }} containers-storage:parksmap:latest docker://677628568568.dkr.ecr.us-east-2.amazonaws.com/parksmap:latest
+        skopeo copy --dest-creds AWS:${{ secrets.AWS_SECRET_ACCESS_KEY }} containers-storage:nationalparks:latest docker://677628568568.dkr.ecr.us-east-2.amazonaws.com/nationalparks:latest
 
     - name: Install OpenShift CLI
       run: |
@@ -62,8 +63,7 @@ jobs:
 
     - name: Deploy Application in OpenShift
       run: |
-        oc project park
-        oc new-app 677628568568.dkr.ecr.us-east-2.amazonaws.com/parksmap:latest --name=nationalparks
+        oc new-app 677628568568.dkr.ecr.us-east-2.amazonaws.com/nationalparks:latest --name=nationalparks
 
     - name: Check Deployment Status
       run: |
