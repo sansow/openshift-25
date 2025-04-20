@@ -87,10 +87,10 @@ jobs:
         echo "OpenShift Image URL: $OCP_IMAGE"
 
         # Tag the image with the ECR repository
-        podman tag $OCP_IMAGE:latest $ECR_URL/$BUILD_NAME:latest
+        podman tag $OCP_IMAGE $ECR_URL/$BUILD_NAME:latest
          # Use Skopeo to copy the image from OpenShift registry to ECR
         skopeo copy --src-creds $OPENSHIFT_USERNAME:$OPENSHIFT_PASSWORD \
-        docker://$OCP_IMAGE:latest \
+        docker://$OCP_IMAGE \
         docker://$ECR_URL/$BUILD_NAME:latest --dest-creds AWS:${{ secrets.AWS_SECRET_ACCESS_KEY }}
        
     - name: Deploy Application in OpenShift
