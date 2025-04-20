@@ -78,7 +78,7 @@ jobs:
     - name: Expose Service
       run: |
         oc expose svc $BUILD_NAME
-        echo " echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
+        echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
     - name: Get Latest Image SHA
       run: |
         # Retrieve the SHA for the latest image
