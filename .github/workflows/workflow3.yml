@@ -46,7 +46,6 @@ jobs:
         OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
       run: |
         oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify
-        oc project $OPENSHIFT_PROJECT
 
     - name: Authenticate Podman to ECR
       env:
@@ -60,6 +59,7 @@ jobs:
 
     - name: Build Application
       run: |
+        oc project $OPENSHIFT_PROJECT
         oc new-app $BASE_IMAGE~$REPO_URL --name=$BUILD_NAME
 
     - name: Tag Podman Image for ECR
