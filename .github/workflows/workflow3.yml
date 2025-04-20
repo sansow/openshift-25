@@ -16,13 +16,21 @@ jobs:
 
     - name: Load Environment Variables
       run: |
-        set -a # Enable exporting all variables
-        source $CONFIG_FILE_PATH
-        set +a
-        echo "AWS_REGION: $AWS_REGION"
-        echo "ECR_URL: $ECR_URL"
-        echo "OPENSHIFT_PROJECT: $OPENSHIFT_PROJECT"
-        echo "BUILD_NAME: $BUILD_NAME"
+        if [ -f $CONFIG_FILE_PATH ]; then
+          echo "Sourcing $CONFIG_FILE_PATH..."
+          set -a
+          source $CONFIG_FILE_PATH || { echo "Error sourcing file"; exit 1; }
+          set +a
+          echo "Environment variables loaded successfully:"
+          echo "BUILD_NAME: $BUILD_NAME"
+          echo "BASE_IMAGE: $BASE_IMAGE"
+          echo "REPO_URL: $REPO_URL"
+          echo "OPENSHIFT_PROJECT: $OPENSHIFT_PROJECT"
+        else
+          echo "Configuration file not found: $CONFIG_FILE_PATH"
+          exit 1
+        fi
+
 
     - name: Install Podman and Skopeo
       run: |
@@ -66,7 +74,8 @@ jobs:
         echo "BASE_IMAGE: $BASE_IMAGE"
         echo "REPO_URL: $REPO_URL"
         echo "OPENSHIFT_PROJECT: $OPENSHIFT_PROJECT"
-        export APP_NAME = $BASE_IMAGE+"~"+$REPO_URL --name=$BUILD_NAME
+        export APP_NAME="$BASE_IMAGE~$REPO_URL --name=$BUILD_NAME"
+        echo "APP_NAME: $APP_NAME"
 
     - name: Build Application
       run: |
