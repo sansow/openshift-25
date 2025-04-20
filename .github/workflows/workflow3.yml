@@ -82,8 +82,8 @@ jobs:
     - name: Get Latest Image SHA
       run: |
         # Retrieve the SHA for the latest image
-        IMAGE_SHA=$(oc get istag nationalparks:latest -o jsonpath='{.image.dockerImageReference}')
-        echo "Latest Image SHA: $IMAGE_SHA"
+        IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
+        echo "Docker Image: $IMAGE_SHA"
         echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV
 
     - name: Push Image to ECR with Skopeo
