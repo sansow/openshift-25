@@ -60,11 +60,18 @@ jobs:
         export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
         export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
         aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin 677628568568.dkr.ecr.us-east-2.amazonaws.com
+    - name: Debug Variables
+      run: |
+        echo "BUILD_NAME: $BUILD_NAME"
+        echo "BASE_IMAGE: $BASE_IMAGE"
+        echo "REPO_URL: $REPO_URL"
+        echo "OPENSHIFT_PROJECT: $OPENSHIFT_PROJECT"
+        expport APP_NAME = $BASE_IMAGE+"~"+$REPO_URL --name=$BUILD_NAME
 
     - name: Build Application
       run: |
         oc project $OPENSHIFT_PROJECT
-        oc new-app $BASE_IMAGE~$REPO_URL --name=$BUILD_NAME
+        oc new-app $APP_NAME
 
     - name: Tag Podman Image for ECR
       run: |
