@@ -51,7 +51,19 @@ jobs:
       run: |
         oc project demo
         oc new-app registry.access.redhat.com/ubi9/openjdk-17~https://github.com/sansow/nationalparks --name=nationalparks
+    - name: Wait for 30 Seconds
+      run: |
+        echo "Sleeping for 30 seconds..."
+        sleep 30
+    - name: Push Image to ECR with Podman
+      run: |
+        # Retrieve the Docker image reference dynamically from OpenShift
+        IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
+        echo "Docker Image: $IMAGE_SHA"
 
+        skopeo copy --src-creds $OPENSHIFT_USERNAME:$OPENSHIFT_PASSWORD \
+        docker://$IMAGE_SHA \
+        docker://$ECR_URL/$BUILD_NAME:latest --dest-creds AWS:${{ secrets.AWS_SECRET_ACCESS_KEY }} 
     - name: Tag Podman Image for ECR
       run: |
         podman tag nationalparks:latest 677628568568.dkr.ecr.us-east-2.amazonaws.com/nationalparks:latest
