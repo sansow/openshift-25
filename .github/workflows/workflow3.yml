@@ -60,10 +60,10 @@ jobs:
       run: |
         oc expose svc $BUILD_NAME
         echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
-    - name: Wait for 30 Seconds
+    - name: Wait for 90 Seconds
       run: |
-        echo "Sleeping for 60 seconds..."
-        sleep 60
+        echo "Sleeping for 90 seconds..."
+        sleep 90
     - name: Authenticate Podman to ECR
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -96,11 +96,9 @@ jobs:
 
     - name: Retrieve OpenShift Token
       run: |
-        echo "OPENSHIFT_TOKEN=$(oc whoami -t)" >> $GITHUB_ENV
-  
+        echo "OPENSHIFT_TOKEN=$(oc whoami -t)" >> $GITHUB_EN
+        echo "OPENSHIFT_REGISTRY=$OPENSHIFT_REGISTRY" >> $GITHUB_EN
         podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
-      
-        # Pull the image from OpenShift internal registry to the local Podman registry
         podman pull $IMAGE_SHA
 
         # Tag the image for ECR
