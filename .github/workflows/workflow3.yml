@@ -94,14 +94,13 @@ jobs:
         
         oc patch bc nationalparks --type=merge -p '{"spec":{"output":{"to":{"kind":"ImageStreamTag","name":"nationalparks:latest"}}}}'
 
-    - name: Retrieve OpenShift Token
+    - name: Pull Image from OpenShift Internal Registry and upload to ECR
       run: |
-        echo "OPENSHIFT_REGISTRY=$OPENSHIFT_REGISTRY" >> $GITHUB_ENV
-        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
-        podman pull $IMAGE_SHA
+       
+        podman pull $BUILD_NAME:latest
 
         # Tag the image for ECR
-        podman tag $IMAGE_SHA $ECR_URL/$BUILD_NAME:latest
+        podman tag $BUILD_NAME:latest $ECR_URL/$BUILD_NAME:latest
 
         # Authenticate Podman to ECR
         aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
