@@ -1,0 +1,124 @@
+name: parksmap
+
+on: 
+  workflow_dispatch:
+
+env:
+  CONFIG_FILE_PATH: ./env-config.txt # Path to the configuration file.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Load Environment Variables
+      id: load_env_vars
+      run: |
+        source $CONFIG_FILE_PATH
+        echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
+        echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
+        echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
+        echo "OPENSHIFT_PROJECT=$OPENSHIFT_PROJECT" >> $GITHUB_ENV
+        echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
+        echo "ECR_URL=$ECR_URL" >> $GITHUB_ENV
+        echo "OCP_IMAGE=$OCP_IMAGE" >> $GITHUB_ENV
+
+    - name: Install Podman and Skopeo
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install podman skopeo
+
+    - name: Configure AWS CLI
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install --update
+        
+    - name: Install OpenShift CLI
+      run: |
+        curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
+        tar -xvf oc.tar.gz
+        sudo mv oc /usr/local/bin/
+
+    - name: Login to OpenShift
+      env:
+        OPENSHIFT_URL: ${{ secrets.OPENSHIFT_URL }}
+        OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
+      run: |
+        oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify
+    - name: Build Application
+      run: |
+        oc project $OPENSHIFT_PROJECT
+        oc new-app $BASE_IMAGE~$REPO_URL --name=$BUILD_NAME
+    - name: Expose Service
+      run: |
+        oc expose svc $BUILD_NAME
+        echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
+    - name: Wait for 80 Seconds
+      run: |
+        echo "Sleeping for 80 seconds..."
+        sleep 80
+    - name: Authenticate Podman to ECR
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+        aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
+
+        
+    - name: Debug Variables
+      run: |
+        echo "BUILD_NAME: $BUILD_NAME"
+        echo "BASE_IMAGE: $BASE_IMAGE"
+        echo "REPO_URL: $REPO_URL"
+        echo "OPENSHIFT_PROJECT: $OPENSHIFT_PROJECT"
+        export APP_NAME="$BASE_IMAGE~$REPO_URL --name=$BUILD_NAME"
+        echo "APP_NAME: $APP_NAME"
+
+   
+
+    - name: Push Image to ECR with Podman
+      env:
+        OPENSHIFT_USERNAME: ${{ secrets.OPENSHIFT_USERNAME }}
+        OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
+        OPENSHIFT_REGISTRY: ${{ secrets.OPENSHIFT_REGISTRY }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        
+      run: |
+        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+        oc project demo
+        IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}' | sed 's/image-registry.openshift-image-registry.svc:5000/default-route-openshift-image-registry.apps.cluster-pt4wf.pt4wf.sandbox315.opentlc.com/')
+        echo $IMAGE_SHA
+        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
+       
+        podman pull $IMAGE_SHA
+
+        podman tag $IMAGE_SHA $ECR_URL/$BUILD_NAME:latest
+        
+        aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
+        
+        podman push $ECR_URL/$BUILD_NAME:latest
+      
+    - name: Deploy Application in OpenShift
+      run: |
+        # Create a new OpenShift project && releasing
+        oc project test || echo "Project 'test' already exists, proceeding..."
+        oc new-app $ECR_URL/$BUILD_NAME:latest --name=$BUILD_NAME
+
+    - name: Check Deployment Status
+      run: |
+        oc status
+
+    - name: Expose Service
+      run: |
+        oc expose svc $BUILD_NAME
