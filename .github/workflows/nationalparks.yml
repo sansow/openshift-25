@@ -109,16 +109,3 @@ jobs:
         
         podman push $ECR_URL/$BUILD_NAME:latest
       
-    - name: Deploy Application in OpenShift
-      run: |
-        # Create a new OpenShift project && releasing
-        oc project test || echo "Project 'test' already exists, proceeding..."
-        oc new-app --docker-image=$ECR_URL/$BUILD_NAME:latest --name=$BUILD_NAME --pull-secret=ecr-secret
-
-    - name: Check Deployment Status
-      run: |
-        oc status
-
-    - name: Expose Service
-      run: |
-        oc expose svc $BUILD_NAME
