@@ -113,7 +113,7 @@ jobs:
       run: |
         # Create a new OpenShift project && releasing
         oc project test || echo "Project 'test' already exists, proceeding..."
-        oc new-app $ECR_URL/$BUILD_NAME:latest --name=$BUILD_NAME
+        oc new-app --docker-image=$ECR_URL/$BUILD_NAME:latest --name=$BUILD_NAME --pull-secret=ecr-secret
 
     - name: Check Deployment Status
       run: |
