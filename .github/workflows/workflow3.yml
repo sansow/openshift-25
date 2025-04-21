@@ -96,8 +96,6 @@ jobs:
 
     - name: Pull Image from OpenShift Internal Registry and upload to ECR
       run: |
-       
-        podman pull $BUILD_NAME:latest
 
         # Tag the image for ECR
         podman tag $BUILD_NAME:latest $ECR_URL/$BUILD_NAME:latest
