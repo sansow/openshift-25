@@ -83,7 +83,7 @@ jobs:
         
       run: |
         oc project demo
-        IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
+        IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}' | sed 's/image-registry.openshift-image-registry.svc:5000/default-route-openshift-image-registry.apps.cluster-pt4wf.pt4wf.sandbox315.opentlc.com/')
         echo $IMAGE_SHA
         podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
        
