@@ -50,8 +50,11 @@ jobs:
       env:
         OPENSHIFT_URL: ${{ secrets.OPENSHIFT_URL }}
         OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
+        
       run: |
         oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify
+        echo "OPENSHIFT_TOKEN: $OPENSHIFT_TOKEN"  >> $GITHUB_ENV
+        
     - name: Debug Variables
       run: |
         echo "BUILD_NAME: $BUILD_NAME"
@@ -60,6 +63,7 @@ jobs:
         echo "OPENSHIFT_PROJECT: $OPENSHIFT_PROJECT"
         export APP_NAME="$BASE_IMAGE~$REPO_URL --name=$BUILD_NAME"
         echo "APP_NAME: $APP_NAME"
+        
 
     - name: Authenticate Podman to ECR
       env:
@@ -74,7 +78,7 @@ jobs:
     - name: Push Image to ECR with Podman
       env:
         OPENSHIFT_USERNAME: ${{ secrets.OPENSHIFT_USERNAME }}
-        OPENSHIFT_PASSWORD: ${{ secrets.OPENSHIFT_PASSWORD }}
+        OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
         OPENSHIFT_REGISTRY: ${{ secrets.OPENSHIFT_REGISTRY }}
         
       run: |
