@@ -78,7 +78,7 @@ jobs:
         OPENSHIFT_REGISTRY: ${{ secrets.OPENSHIFT_REGISTRY }}
         
       run: |
-       
+        oc project demo
         oc patch bc nationalparks --type=merge -p '{"spec":{"output":{"to":{"kind":"ImageStreamTag","name":"nationalparks:latest"}}}}'
         
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
