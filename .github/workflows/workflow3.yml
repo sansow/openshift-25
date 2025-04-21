@@ -62,8 +62,8 @@ jobs:
         echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
     - name: Wait for 30 Seconds
       run: |
-        echo "Sleeping for 30 seconds..."
-        sleep 30
+        echo "Sleeping for 60 seconds..."
+        sleep 60
     - name: Authenticate Podman to ECR
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -91,8 +91,9 @@ jobs:
         
       run: |
         # Retrieve the Docker image reference dynamically from OpenShift
-        IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
-        echo "Docker Image: $IMAGE_SHA"
+        
+        oc patch bc nationalparks --type=merge -p '{"spec":{"output":{"to":{"kind":"ImageStreamTag","name":"nationalparks:latest"}}}}'
+
     - name: Retrieve OpenShift Token
       run: |
         echo "OPENSHIFT_TOKEN=$(oc whoami -t)" >> $GITHUB_ENV
