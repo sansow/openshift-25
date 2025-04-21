@@ -1,4 +1,4 @@
-name: nationalparks
+name: parksmap
 
 on: 
   workflow_dispatch:
