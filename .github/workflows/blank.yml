@@ -80,10 +80,9 @@ jobs:
       run: |
         oc project demo
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
-        
-        echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV
-        
+        echo $IMAGE_SHA
         podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN https://image-registry.openshift-image-registry.svc:5000
+       
         podman pull $IMAGE_SHA
 
         podman tag $IMAGE_SHA $ECR_URL/$BUILD_NAME:latest
