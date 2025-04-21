@@ -94,13 +94,15 @@ jobs:
         podman pull $IMAGE_SHA
 
         podman tag $IMAGE_SHA $ECR_URL/$BUILD_NAME:latest
+        
         aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
+        
         podman push $ECR_URL/$BUILD_NAME:latest
       
     - name: Deploy Application in OpenShift
       run: |
         # Create a new OpenShift project && releasing
-        oc new-project test || echo "Project 'test' already exists, proceeding..."
+        oc project test || echo "Project 'test' already exists, proceeding..."
         oc new-app $ECR_URL/$BUILD_NAME:latest --name=$BUILD_NAME
 
     - name: Check Deployment Status
