@@ -66,7 +66,6 @@ jobs:
         sleep 30
     - name: Authenticate Podman to ECR
       env:
-        #AWS_REGION: us-east-2
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
@@ -94,8 +93,12 @@ jobs:
         # Retrieve the Docker image reference dynamically from OpenShift
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
         echo "Docker Image: $IMAGE_SHA"
-        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_PASSWORD $OPENSHIFT_REGISTRY
-
+    - name: Retrieve OpenShift Token
+      run: |
+        echo "OPENSHIFT_TOKEN=$(oc whoami -t)" >> $GITHUB_ENV
+  
+        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
+      
         # Pull the image from OpenShift internal registry to the local Podman registry
         podman pull $IMAGE_SHA
 
