@@ -90,13 +90,22 @@ jobs:
         OPENSHIFT_REGISTRY: ${{ secrets.OPENSHIFT_REGISTRY }}
         
       run: |
-        # Retrieve the Docker image reference dynamically from OpenShift
+        # Retrieve the image reference dynamically from OpenShift
         
         oc patch bc nationalparks --type=merge -p '{"spec":{"output":{"to":{"kind":"ImageStreamTag","name":"nationalparks:latest"}}}}'
 
     - name: Pull Image from OpenShift Internal Registry and upload to ECR
       run: |
-       podman tag $BUILD_NAME:latest $ECR_URL/$BUILD_NAME:latest
+       
+       IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
+       if [ -z "$IMAGE_SHA" ]; then
+        echo "Error: ImageStreamTag 'nationalparks:latest' not found or empty."
+       exit 1
+       fi
+       echo "Docker Image: $IMAGE_SHA"
+       echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV
+
+       podman tag $IMAGE_SHA $ECR_URL/$BUILD_NAME:latest
        aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
        podman push $ECR_URL/$BUILD_NAME:latest
       
