@@ -79,6 +79,11 @@ jobs:
       run: |
         oc expose svc $BUILD_NAME
         echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
+    - name: Wait for 30 Seconds
+      run: |
+        echo "Sleeping for 30 seconds..."
+        sleep 30
+
     - name: Push Image to ECR with Podman
        env:
         OPENSHIFT_USERNAME: ${{ secrets.OPENSHIFT_USERNAME }}
