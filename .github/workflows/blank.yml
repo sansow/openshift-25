@@ -79,15 +79,10 @@ jobs:
         
       run: |
         oc project demo
-        oc patch bc nationalparks --type=merge -p '{"spec":{"output":{"to":{"kind":"ImageStreamTag","name":"nationalparks:latest"}}}}'
-        
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
-         if [ -z "$IMAGE_SHA" ]; then
-         echo "Error: ImageStreamTag 'nationalparks:latest' not found or empty."
-         exit 1
-         fi
-        echo "Docker Image: $IMAGE_SHA"
+        
         echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV
+        
         podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN https://image-registry.openshift-image-registry.svc:5000
         podman pull $IMAGE_SHA
 
