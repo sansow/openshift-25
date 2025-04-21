@@ -88,11 +88,13 @@ jobs:
       env:
         OPENSHIFT_USERNAME: ${{ secrets.OPENSHIFT_USERNAME }}
         OPENSHIFT_PASSWORD: ${{ secrets.OPENSHIFT_PASSWORD }}
+        OPENSHIFT_REGISTRY: ${{ secrets.OPENSHIFT_REGISTRY }}
+        
       run: |
         # Retrieve the Docker image reference dynamically from OpenShift
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
         echo "Docker Image: $IMAGE_SHA"
-        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_PASSWORD image-registry.openshift-image-registry.svc:5000
+        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_PASSWORD $OPENSHIFT_REGISTRY
 
         # Pull the image from OpenShift internal registry to the local Podman registry
         podman pull $IMAGE_SHA
