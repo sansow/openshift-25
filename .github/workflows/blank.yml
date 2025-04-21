@@ -1,4 +1,4 @@
-name: parksmap
+name: part2
 
 on: 
   workflow_dispatch:
@@ -52,16 +52,6 @@ jobs:
         OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
       run: |
         oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify
-
-    - name: Authenticate Podman to ECR
-      env:
-        #AWS_REGION: us-east-2
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
-        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-        aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
     - name: Debug Variables
       run: |
         echo "BUILD_NAME: $BUILD_NAME"
@@ -71,44 +61,38 @@ jobs:
         export APP_NAME="$BASE_IMAGE~$REPO_URL --name=$BUILD_NAME"
         echo "APP_NAME: $APP_NAME"
 
-    - name: Build Application
+    - name: Authenticate Podman to ECR
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
-        oc project $OPENSHIFT_PROJECT
-        oc new-app $BASE_IMAGE~$REPO_URL --name=$BUILD_NAME
-    - name: Expose Service
-      run: |
-        oc expose svc $BUILD_NAME
-        echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
-    - name: Wait for 30 Seconds
-      run: |
-        echo "Sleeping for 30 seconds..."
-        sleep 30
+        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+        aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
+  
 
     - name: Push Image to ECR with Podman
-       env:
+      env:
         OPENSHIFT_USERNAME: ${{ secrets.OPENSHIFT_USERNAME }}
         OPENSHIFT_PASSWORD: ${{ secrets.OPENSHIFT_PASSWORD }}
+        OPENSHIFT_REGISTRY: ${{ secrets.OPENSHIFT_REGISTRY }}
+        
       run: |
-        # Retrieve the Docker image reference dynamically from OpenShift
+       
+        oc patch bc nationalparks --type=merge -p '{"spec":{"output":{"to":{"kind":"ImageStreamTag","name":"nationalparks:latest"}}}}'
+        
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
+         if [ -z "$IMAGE_SHA" ]; then
+         echo "Error: ImageStreamTag 'nationalparks:latest' not found or empty."
+         exit 1
+         fi
         echo "Docker Image: $IMAGE_SHA"
-        # Use Skopeo to copy the image to ECR
-        skopeo copy --src-creds $OPENSHIFT_USERNAME:$OPENSHIFT_PASSWORD \
-        docker://$IMAGE_SHA \
-        docker://$ECR_URL/$BUILD_NAME:latest --dest-creds AWS:${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        # Authenticate Podman to the OpenShift internal registry
-        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_PASSWORD image-registry.openshift-image-registry.svc:5000
-
-        # Pull the image from OpenShift internal registry to the local Podman registry
+        echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV
+        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN https://image-registry.openshift-image-registry.svc:5000
         podman pull $IMAGE_SHA
 
-        # Tag the image for ECR
         podman tag $IMAGE_SHA $ECR_URL/$BUILD_NAME:latest
-
-        # Authenticate Podman to ECR
         aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
-
-        # Push the image to ECR
         podman push $ECR_URL/$BUILD_NAME:latest
       
     - name: Deploy Application in OpenShift
