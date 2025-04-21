@@ -97,7 +97,8 @@ jobs:
         docker://$IMAGE_SHA \
         docker://$ECR_URL/$BUILD_NAME:latest --dest-creds AWS:${{ secrets.AWS_SECRET_ACCESS_KEY }}
         # Authenticate Podman to the OpenShift internal registry
-        podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_PASSWORD image-registry.openshift-image-registry.svc:5000
+        #podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_PASSWORD image-registry.openshift-image-registry.svc:5000
+        podman login --username=kubeadmin --password=$(oc whoami -t) default-route-openshift-image-registry.apps.cluster-pt4wf.pt4wf.sandbox315.opentlc.com
 
         # Pull the image from OpenShift internal registry to the local Podman registry
         podman pull $IMAGE_SHA
