@@ -96,8 +96,8 @@ jobs:
 
     - name: Retrieve OpenShift Token
       run: |
-        echo "OPENSHIFT_TOKEN=$(oc whoami -t)" >> $GITHUB_EN
-        echo "OPENSHIFT_REGISTRY=$OPENSHIFT_REGISTRY" >> $GITHUB_EN
+        echo "OPENSHIFT_TOKEN=$(oc whoami -t)" >> $GITHUB_ENV
+        echo "OPENSHIFT_REGISTRY=$OPENSHIFT_REGISTRY" >> $GITHUB_ENV
         podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
         podman pull $IMAGE_SHA
 
