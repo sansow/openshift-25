@@ -85,14 +85,13 @@ jobs:
    
 
     - name: Push Image to ECR with Podman
-       env:
+      env:
         OPENSHIFT_USERNAME: ${{ secrets.OPENSHIFT_USERNAME }}
         OPENSHIFT_PASSWORD: ${{ secrets.OPENSHIFT_PASSWORD }}
       run: |
         # Retrieve the Docker image reference dynamically from OpenShift
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
         echo "Docker Image: $IMAGE_SHA"
-     # Authenticate Podman to the OpenShift internal registry
         podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_PASSWORD image-registry.openshift-image-registry.svc:5000
 
         # Pull the image from OpenShift internal registry to the local Podman registry
