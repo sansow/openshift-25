@@ -80,11 +80,17 @@ jobs:
         oc expose svc $BUILD_NAME
         echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
     - name: Push Image to ECR with Podman
+       env:
+        OPENSHIFT_USERNAME: ${{ secrets.OPENSHIFT_USERNAME }}
+        OPENSHIFT_PASSWORD: ${{ secrets.OPENSHIFT_PASSWORD }}
       run: |
         # Retrieve the Docker image reference dynamically from OpenShift
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}')
         echo "Docker Image: $IMAGE_SHA"
-
+        # Use Skopeo to copy the image to ECR
+        skopeo copy --src-creds $OPENSHIFT_USERNAME:$OPENSHIFT_PASSWORD \
+        docker://$IMAGE_SHA \
+        docker://$ECR_URL/$BUILD_NAME:latest --dest-creds AWS:${{ secrets.AWS_SECRET_ACCESS_KEY }}
         # Authenticate Podman to the OpenShift internal registry
         podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_PASSWORD image-registry.openshift-image-registry.svc:5000
 
