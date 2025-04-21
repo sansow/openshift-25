@@ -96,15 +96,9 @@ jobs:
 
     - name: Pull Image from OpenShift Internal Registry and upload to ECR
       run: |
-
-        # Tag the image for ECR
-        podman tag $BUILD_NAME:latest $ECR_URL/$BUILD_NAME:latest
-
-        # Authenticate Podman to ECR
-        aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
-
-        # Push the image to ECR
-        podman push $ECR_URL/$BUILD_NAME:latest
+       podman tag $BUILD_NAME:latest $ECR_URL/$BUILD_NAME:latest
+       aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
+       podman push $ECR_URL/$BUILD_NAME:latest
       
     - name: Deploy Application in OpenShift
       run: |
