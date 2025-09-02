@@ -97,6 +97,7 @@ jobs:
         export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
         export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
         oc project demo
+        export OPENSHIFT_REGISTRY=$(oc get route default-route -n openshift-image-registry -o jsonpath='{.spec.host}')
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}' | sed 's/image-registry.openshift-image-registry.svc:5000/default-route-openshift-image-registry.apps.cluster-hkfpq.hkfpq.sandbox5287.opentlc.com/')
         echo $IMAGE_SHA
         podman login --username=$OPENSHIFT_USERNAME --password=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
