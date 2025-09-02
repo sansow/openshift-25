@@ -1,5 +1,5 @@
 AWS_REGION=us-east-2
-ECR_URL=677628568568.dkr.ecr.us-east-2.amazonaws.com
+ECR_URL=913524911352.dkr.ecr.us-east-2.amazonaws.com
 OPENSHIFT_PROJECT=demo
 BUILD_NAME=nationalparks
 BASE_IMAGE=registry.access.redhat.com/ubi9/openjdk-17
