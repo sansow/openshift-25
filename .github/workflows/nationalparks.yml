@@ -25,6 +25,7 @@ jobs:
         echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
         echo "ECR_URL=$ECR_URL" >> $GITHUB_ENV
         echo "OCP_IMAGE=$OCP_IMAGE" >> $GITHUB_ENV
+        echo "IMAGE=nationalparks:latest" >> $GITHUB_ENV 
 
     - name: Install Podman and Skopeo
       run: |
@@ -52,27 +53,7 @@ jobs:
         OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
       run: |
         oc login $OPENSHIFT_URL --token=$OPENSHIFT_TOKEN --insecure-skip-tls-verify
-    - name: Build Application
-      run: |
-        oc project $OPENSHIFT_PROJECT
-        oc new-app $BASE_IMAGE~$REPO_URL --name=$BUILD_NAME
-    - name: Expose Service
-      run: |
-        oc expose svc $BUILD_NAME
-        echo "APP_NAME: $BUILD_NAME is now deployed to dev project $OPENSHIFT_PROJECT"
-    - name: Wait for 80 Seconds
-      run: |
-        echo "Sleeping for 80 seconds..."
-        sleep 80
-    - name: Authenticate Podman to ECR
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
-        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-        aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
-
+    
         
     - name: Debug Variables
       run: |
@@ -81,6 +62,7 @@ jobs:
         echo "REPO_URL: $REPO_URL"
         echo "OPENSHIFT_PROJECT: $OPENSHIFT_PROJECT"
         export APP_NAME="$BASE_IMAGE~$REPO_URL --name=$BUILD_NAME"
+        export APP_IMAGE="image-registry.openshift-image-registry.svc:5000/demo/nationalparks:latest"
         echo "APP_NAME: $APP_NAME"
 
    
@@ -97,7 +79,10 @@ jobs:
         export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
         export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
         oc project demo
+        podman pull $APP_IMAGE
+        podman tag $APP_IMAGE $ECR_URL/nationalparks:latest
         aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
-        podman login -u=$OPENSHIFT_USERNAME -p=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
-        oc image mirror $OPENSHIFT_REGISTRY/demo/$BUILD_NAME:latest $ECR_URL/$BUILD_NAME:latest
+        podman push $ECR_URL/nationalparks:latest
+        #podman login -u=$OPENSHIFT_USERNAME -p=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
+        #oc image mirror $OPENSHIFT_REGISTRY/demo/$BUILD_NAME:latest $ECR_URL/$BUILD_NAME:latest
 
