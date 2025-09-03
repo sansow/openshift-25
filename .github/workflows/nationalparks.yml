@@ -98,5 +98,6 @@ jobs:
         export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
         oc project demo
         aws ecr get-login-password --region $AWS_REGION | podman login --username AWS --password-stdin $ECR_URL
-        oc image mirror $OPENSHIFT_REGISTRY/demo/$BUILD_NAME:latest \$ECR_URL/$BUILD_NAME:latest
+        podman login -u=$OPENSHIFT_USERNAME -p=$OPENSHIFT_TOKEN $OPENSHIFT_REGISTRY
+        oc image mirror $OPENSHIFT_REGISTRY/demo/$BUILD_NAME:latest $ECR_URL/$BUILD_NAME:latest
 
