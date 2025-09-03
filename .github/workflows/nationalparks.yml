@@ -102,8 +102,9 @@ jobs:
         export OPENSHIFT_REGISTRY=$(oc get route default-route -n openshift-image-registry -o jsonpath='{.spec.host}')
         IMAGE_SHA=$(oc describe istag nationalparks:latest | grep "Docker Image:" | awk '{print $3}' | sed 's/image-registry.openshift-image-registry.svc:5000/default-route-openshift-image-registry.apps.cluster-hkfpq.hkfpq.sandbox5287.opentlc.com/')
         echo $IMAGE_SHA
-        podman login -u=registry-access -p=REGISTRY_TOKEN $OPENSHIFT_REGISTRY
-       
+        echo "LOGGING INTO OPENSHIFT INTERNAL REGISTRY $OPENSHIFT_REGISTRY"
+        podman login $OPENSHIFT_REGISTRY --username registry-access --password $REGISTRY_TOKEN
+
         podman pull $IMAGE_SHA
 
         podman tag $IMAGE_SHA $ECR_URL/$BUILD_NAME:latest
